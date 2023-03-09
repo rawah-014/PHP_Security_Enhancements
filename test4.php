@@ -4,10 +4,10 @@ session_start();
 $db = new mysqli('localhost', 'root', '', 'phploginapp');
 
 // Check if user has attempted to login three times in the last 3 minutes
-if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= 3 && time() - $_SESSION['last_attempt_time'] <= 180) {
-  // Block user's IP address for 3 minutes
+if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= 3 && time() - $_SESSION['last_attempt_time'] <= 600) {
+  // Block user's IP address for 10 minutes
   header('HTTP/1.1 429 Too Many Requests');
-  header('Retry-After: 180');
+  header('Retry-After: 600');
   exit('Too many login attempts. Please try again later.');
 }
 
@@ -18,6 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $username = $_POST['username'];
   $password = $_POST['password'];
   $ip_address = $_SERVER['REMOTE_ADDR']; // Get user's IP address
+
+
+    // Validate the reCAPTCHA response
+    $recaptcha_secret = "6LdVHx4jAAAAADW2qLSWOyPE6NY3k-wsMT-ojNQq";
+    $recaptcha_response = $_POST['g-recaptcha-response'];
+    $recaptcha_url = "https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=$recaptcha_response";
+    $recaptcha = json_decode(file_get_contents($recaptcha_url));
+    if (!$recaptcha->success) {
+      // reCAPTCHA validation failed, show an error message and exit
+      exit("reCAPTCHA validation failed.");
+    }
 
    // Save login attempt to database
    $stmt = $db->prepare("INSERT INTO login_attempts (ip_address, attempt_time) VALUES (?, NOW())");
@@ -56,10 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_SESSION['login_attempts'] < 3) {
       echo 'Login failed. Please try again.';
     } else {
-      echo 'Too many login attempts. Please wait 3 minutes before trying again.';
+      echo 'Too many login attempts. Please wait 10 minutes before trying again.';
     }
     // Show an alert that the login failed
-    echo '<script>alert("Login failed. Please try again.")</script>';
+   /*  echo '<script>alert("Login failed. Please try again.")</script>'; */
   }
 
   // Close the cURL handle
@@ -67,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<!--  google captcha -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+	<script src="https://www.google.com/recaptcha/api.js?render=6LdVHx4jAAAAAKMyF0hhGI49OWE3HF_Pyp9fF4Fx"></script>
 <!-- Create the login form -->
 <form method="post">
   <label for="username">Username:</label>
@@ -74,6 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <br>
   <label for="password">Password:</label>
   <input type="password" name="password" required>
+  <br>
+  <div class="g-recaptcha" data-sitekey="6LdVHx4jAAAAAKMyF0hhGI49OWE3HF_Pyp9fF4Fx"></div>
   <br>
   <button type="submit">Login</button>
 </form>
