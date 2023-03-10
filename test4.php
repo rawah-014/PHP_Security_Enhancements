@@ -3,6 +3,29 @@
 session_start();
 $db = new mysqli('localhost', 'root', '', 'phploginapp');
 
+/* ---------------------------- Send http request --------------------------- */
+function sendHttpRequest($url, $data = array(), $headers = array())
+{
+  // initiate the curl request
+  $curl = curl_init();
+  // set the request options
+  curl_setopt_array($curl, array(
+    CURLOPT_URL => 'https://zainblue.com/dologin.php', // url to send the request to
+    CURLOPT_RETURNTRANSFER => true, // return the response as a string
+    CURLOPT_ENCODING => '', // encoding type not required it's by default empty
+    CURLOPT_MAXREDIRS => 10, // max redirects to follow we set this because maybe the url has redirects and not return the response directly
+    CURLOPT_TIMEOUT => 0, // timeout 0 means no timeout
+    CURLOPT_FOLLOWLOCATION => true, // follow redirects if any redirect from them
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1, // http version not required it's by default 1.1
+    CURLOPT_CUSTOMREQUEST => 'POST', // request method
+    CURLOPT_POSTFIELDS => $data, // request data
+    CURLOPT_HTTPHEADER => $headers, // request headers if any
+  ));
+  $response = curl_exec($curl);
+  curl_close($curl);
+  return $response;
+}
+
 // Check if user has attempted to login three times in the last 3 minutes
 if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= 3 && time() - $_SESSION['last_attempt_time'] <= 600) {
   // Block user's IP address for 10 minutes
@@ -36,30 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    $stmt->execute();
    $stmt->close();
 
-  // Create a cURL handle
-  $ch = curl_init();
-
-  // Set the cURL options
-  curl_setopt($ch, CURLOPT_URL, 'https://zainblue.com/dologin.php');
-  curl_setopt($ch, CURLOPT_POST, true);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+  // Create a request to the zainblue.com to authenticate the user
+  $response = sendHttpRequest('https://zainblue.com/dologin.php', array(
     'username' => $username,
-    'password' => $password
+    'password' => $password,
   ));
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-  // Send the request and get the response
-  $response = curl_exec($ch);
-
-  // Check if the authentication was successful
-  if (curl_getinfo($ch, CURLINFO_HTTP_CODE) === 302 &&
-      strpos(curl_getinfo($ch, CURLINFO_REDIRECT_URL), 'incorrect=true') === false /* &&
-      strpos($response, 'Set-Cookie: WHMCSUser=') !== false */) {
-    // Redirect the user to the clientarea.php page
-    header('Location: https://zainblue.com/clientarea.php?language=english');
-    exit();
-  } else {
-
+  // if the response text contains the string "incorrect" then the login failed
+  if (strpos($response, 'Incorrect') !== false) {
     $_SESSION['login_attempts'] = isset($_SESSION['login_attempts']) ? $_SESSION['login_attempts'] + 1 : 1;
     $_SESSION['last_attempt_time'] = time();
 
@@ -69,12 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
       echo 'Too many login attempts. Please wait 10 minutes before trying again.';
     }
-    // Show an alert that the login failed
-   /*  echo '<script>alert("Login failed. Please try again.")</script>'; */
+  } else {
+    // Redirect the user to the clientarea.php page
+    header('Location: https://zainblue.com/clientarea.php?language=english');
+    exit();
   }
-
-  // Close the cURL handle
-  curl_close($ch);
 }
 ?>
 
