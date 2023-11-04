@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     // Validate the reCAPTCHA response
-    $recaptcha_secret = "6LdVHx4jAAAAADW2qLSWOyPE6NY3k-wsMT-ojNQq";
+    $recaptcha_secret = "Your_key";
     $recaptcha_response = $_POST['g-recaptcha-response'];
     $recaptcha_url = "https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=$recaptcha_response";
     $recaptcha = json_decode(file_get_contents($recaptcha_url));
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!--  google captcha -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-	<script src="https://www.google.com/recaptcha/api.js?render=6LdVHx4jAAAAAKMyF0hhGI49OWE3HF_Pyp9fF4Fx"></script>
+	<script src="https://www.google.com/recaptcha/api.js?render=Your_key"></script>
 <!-- Create the login form -->
 <form method="post">
   <label for="username">Username:</label>
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <label for="password">Password:</label>
   <input type="password" name="password" required>
   <br>
-  <div class="g-recaptcha" data-sitekey="6LdVHx4jAAAAAKMyF0hhGI49OWE3HF_Pyp9fF4Fx"></div>
+  <div class="g-recaptcha" data-sitekey="Your_key"></div>
   <br>
   <button type="submit">Login</button>
 </form>
