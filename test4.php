@@ -1,7 +1,7 @@
 <?php
 
 session_start();
-$db = new mysqli('localhost', 'root', '', 'phploginapp');
+$db = new mysqli('localhost', 'root', '', '');
 
 /* ---------------------------- Send http request --------------------------- */
 function sendHttpRequest($url, $data = array(), $headers = array())
@@ -99,3 +99,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <br>
   <button type="submit">Login</button>
 </form>
+
